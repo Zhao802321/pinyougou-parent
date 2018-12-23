@@ -10,6 +10,8 @@ import com.pinyougou.sellergoods.service.GoodsService;
 
 import entity.PageResult;
 import entity.Result;
+import vo.Goods;
+
 /**
  * controller
  * @author Administrator
@@ -47,7 +49,7 @@ public class GoodsController {
 	 * @return
 	 */
 	@RequestMapping("/add")
-	public Result add(@RequestBody TbGoods goods){
+	public Result add(@RequestBody Goods goods){
 		try {
 			goodsService.add(goods);
 			return new Result(true, "增加成功");
