@@ -1,5 +1,5 @@
  //控制层 
-app.controller('goodsController' ,function($scope,$controller   ,goodsService,uploadService){
+app.controller('goodsController' ,function($scope,$controller   ,goodsService,uploadService,itemCatService,typeTemplateService){
 	
 	$controller('baseController',{$scope:$scope});//继承
 	
@@ -103,5 +103,64 @@ app.controller('goodsController' ,function($scope,$controller   ,goodsService,up
         $scope.entity.goodsDesc.itemImages.splice(index,1);
     }
 
+    //读取一级分类
+
+    $scope.selectItemCat1Lis=function () {
+        itemCatService.findByParentId(0).success(
+            function (response) {
+                $scope.itemCat1List =response;
+
+            }
+        );
+    }
+
+    //读取二级分类
+    $scope.$watch('entity.goods.category1Id',function (newValue, oldValue) {
+    	if (newValue != undefined){
+            itemCatService.findByParentId(newValue).success(
+                function (response) {
+                    $scope.itemCat2List =response;
+                }
+            );
+		}
+
+    });
+    //读取三级分类
+    $scope.$watch('entity.goods.category2Id',function (newValue, oldValue) {
+    	if (newValue != undefined){
+            itemCatService.findByParentId(newValue).success(
+                function (response) {
+                    $scope.itemCat3List =response;
+                }
+            );
+		}
+
+    });
+    //三级分类选择后  读取模板ID
+    $scope.$watch('entity.goods.category3Id', function(newValue, oldValue) {
+    	if (newValue != undefined){
+            itemCatService.findOne(newValue).success(
+                function(response){
+                    $scope.entity.goods.typeTemplateId=response.typeId; //更新模板ID
+                }
+            );
+		}
+
+    });
+    //模板ID选择后  更新品牌列表
+    $scope.$watch('entity.goods.typeTemplateId',function (newValue, oldValue) {
+    	if (newValue != undefined){
+            typeTemplateService.findOne(newValue).success(function (response) {
+
+                $scope.typeTemplate=response;
+                $scope.typeTemplate.brandIds =
+                    JSON.parse($scope.typeTemplate.brandIds);//品牌列表
+                $scope.entity.goodsDesc.customAttributeItems=
+					JSON.parse( $scope.typeTemplate.customAttributeItems);//扩展属性
+
+            });
+		}
+
+    })
 
 });
