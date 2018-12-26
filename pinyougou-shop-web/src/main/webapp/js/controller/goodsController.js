@@ -107,7 +107,7 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
     };
 
 
-    $scope.entity={goods:{},goodsDesc:{itemImages:[]}};//定义页面实体结构
+    $scope.entity={goods:{},goodsDesc:{itemImages:[],specificationItems:[]}};//定义页面实体结构
     //添加图片列表
     $scope.add_image_entity=function(){
         $scope.entity.goodsDesc.itemImages.push($scope.image_entity);
@@ -176,9 +176,20 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
                         JSON.parse($scope.typeTemplate.customAttributeItems);//扩展属性
                 }
             });
+
+            //查询规格列表
+            typeTemplateService.findSpecList(newValue).success(
+                function(response){
+                    $scope.specList=response;
+                }
+            );
 		}
 
+
+
     });
+
+
 
     $scope.status = ['未审核','已审核','审核未通过','关闭'];
     $scope.itemCatList=[];//商品分类列表
@@ -195,4 +206,51 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
         );
     }
 
-                });
+
+    //保存选中规格选项
+    $scope.updateSpecAttribute=function($event,name,value){
+        var object= $scope.searchObjectByKey(
+            $scope.entity.goodsDesc.specificationItems ,'attributeName', name);
+        if(object!=null){
+            if($event.target.checked ){
+                object.attributeValue.push(value);
+            }else{//取消勾选
+                 object.attributeValue.splice( object.attributeValue.indexOf(value ) ,1);//移除选项
+                //如果选项都取消了，将此条记录移除
+                if(object.attributeValue.length==0){
+                    $scope.entity.goodsDesc.specificationItems.splice(
+                        $scope.entity.goodsDesc.specificationItems.indexOf(object),1);
+                }
+            }
+        }else{
+            $scope.entity.goodsDesc.specificationItems.push(
+                {"attributeName":name,"attributeValue":[value]});
+        }
+    }
+    //创建SKU列表
+    $scope.createItemList=function () {
+        $scope.entity.itemList=[{spec:{},price:0,num:9999,status:'0',isDefault:'0'}];//itemList初始化
+        var items = $scope.entity.goodsDesc.specificationItems;
+        for(var i = 0;i < items.length;i++){
+            $scope.entity.itemList =
+                addCloumn($scope.entity.itemList,items[i].attributeName,items[i].attributeValue);
+        }
+    }
+    //添加列值
+    addCloumn=function (list, columnName, columnValues) {
+        var newList=[];//新的集合
+        for (var i = 0; i < list.length; i++) {
+            var oldRow = list[i];
+            for (var j = 0; j < columnValues.length; j++) {
+                var newRow = JSON.parse(JSON.stringify(oldRow));//深克隆
+                newRow.spec[columnName]=columnValues[j];
+                newList.push(newRow);
+
+            }
+
+        }
+        return newList;
+    }
+
+
+});

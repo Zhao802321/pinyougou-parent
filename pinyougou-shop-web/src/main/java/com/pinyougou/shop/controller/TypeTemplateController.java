@@ -113,6 +113,12 @@ public class TypeTemplateController {
 		return typeTemplateService.findPage(typeTemplate, page, rows);		
 	}
 
+
+	/**
+	 * 返回规格列表
+	 * @return
+	 */
+
 	@RequestMapping("/findSpecList.do")
 	public List<Map> findSpecList(Long id) {
 		return typeTemplateService.findSpecList(id);
