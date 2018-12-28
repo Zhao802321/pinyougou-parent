@@ -41,6 +41,11 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
                //规格
                 $scope.entity.goodsDesc.specificationItems=JSON.parse($scope.entity.goodsDesc.specificationItems);
 
+                //SKU列表规格列转换
+                for( var i=0;i<$scope.entity.itemList.length;i++ ){
+                    $scope.entity.itemList[i].spec =
+                        JSON.parse( $scope.entity.itemList[i].spec);
+                }
 
 
             }
@@ -54,8 +59,8 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
 			function(response){
 				if(response.success){
                     alert('保存成功');
-                    $scope.entity={};
-                    editor.html('');//清空富文本编辑器
+                    location.href="goods.html";//跳转到商品列表页
+
 				}else{
 					alert(response.message);
 				}
@@ -251,6 +256,22 @@ app.controller('goodsController' ,function($scope,$controller ,$location  ,goods
         }
         return newList;
     }
+
+    //根据规格名称和选项名称返回是否被勾选
+    $scope.checkAttributeValue=function(specName,optionName){
+        var items= $scope.entity.goodsDesc.specificationItems;
+        var object= $scope.searchObjectByKey(items,'attributeName',specName);
+        if(object==null){
+            return false;
+        }else{
+            if(object.attributeValue.indexOf(optionName)>=0){
+                return true;
+            }else{
+                return false;
+            }
+        }
+    }
+
 
 
 });

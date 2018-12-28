@@ -66,36 +66,68 @@ public class GoodsServiceImpl implements GoodsService {
 		goodsMapper.insert(goods.getGoods());
 		goods.getGoodsDesc().setGoodsId(goods.getGoods().getId());//设置ID
 		goodsDescMapper.insert(goods.getGoodsDesc());//插入商品扩展数据
-		for (TbItem item : goods.getItemList()) {
-			//标题
-			String title = goods.getGoods().getGoodsName();
-			Map<String,Object> specMap = JSON.parseObject(item.getSpec());
-			for (String key : specMap.keySet()) {
-				title+=""+specMap.get(key);
-			}
-			item.setTitle(title);
-			item.setGoodsId(goods.getGoods().getId());//商品spu编号
-			item.setSellerId(goods.getGoods().getSellerId());//商家编号
-			item.setCategoryid(goods.getGoods().getCategory3Id());//商品分类编号(3级)
-			item.setCreateTime(new Date());//创建日期
-			item.setUpdateTime(new Date());//修改日期
-			//品牌名称
-			TbBrand brand = brandMapper.selectByPrimaryKey(goods.getGoods().getBrandId());
-			item.setBarcode(brand.getName());
-			//分类名称
-			TbItemCat itemCat = itemCatMapper.selectByPrimaryKey(goods.getGoods().getCategory3Id());
-			item.setCategory(itemCat.getName());
-			//商家名称
-			TbSeller seller = sellerMapper.selectByPrimaryKey(goods.getGoods().getSellerId());
-			item.setSeller(seller.getNickName());
-			//图片地址(取spu的第一张图片)
-			List<Map> imageList = JSON.parseArray(goods.getGoodsDesc().getItemImages(), Map.class);
-			if (imageList.size()>0){
-				item.setImage((String)imageList.get(0).get("url"));
 
+		saveItemList(goods);//插入SKU商品数据
+	}
+	private void setItemValues(TbItem item,Goods goods){
+		//商品分类
+		item.setCategoryid(goods.getGoods().getCategory3Id());//三级分类ID
+		item.setCreateTime(new Date());//创建日期
+		item.setUpdateTime(new Date());//更新日期
+
+		item.setGoodsId(goods.getGoods().getId());//商品ID
+		item.setSellerId(goods.getGoods().getSellerId());//商家ID
+
+		//分类名称
+		TbItemCat itemCat = itemCatMapper.selectByPrimaryKey(goods.getGoods().getCategory3Id());
+		item.setCategory(itemCat.getName());
+		//品牌名称
+		TbBrand brand = brandMapper.selectByPrimaryKey(goods.getGoods().getBrandId());
+		item.setBrand(brand.getName());
+		//商家名称(店铺名称)
+		TbSeller seller = sellerMapper.selectByPrimaryKey(goods.getGoods().getSellerId());
+		item.setSeller(seller.getNickName());
+
+		//图片
+		List<Map> imageList = JSON.parseArray( goods.getGoodsDesc().getItemImages(), Map.class) ;
+		if(imageList.size()>0){
+			item.setImage( (String)imageList.get(0).get("url"));
+		}
+
+	}
+
+	//插入sku列表数据
+	private void saveItemList(Goods goods){
+
+		if("1".equals(goods.getGoods().getIsEnableSpec())){
+			for(TbItem item:   goods.getItemList()){
+				//构建标题  SPU名称+ 规格选项值
+				String title=goods.getGoods().getGoodsName();//SPU名称
+				Map<String,Object> map=  JSON.parseObject(item.getSpec());
+				for(String key:map.keySet()) {
+					title+=" "+map.get(key);
+				}
+				item.setTitle(title);
+
+				setItemValues(item,goods);
+
+				itemMapper.insert(item);
 			}
+		}else{//没有启用规格
+
+			TbItem item=new TbItem();
+			item.setTitle(goods.getGoods().getGoodsName());//标题
+			item.setPrice(goods.getGoods().getPrice());//价格
+			item.setNum(99999);//库存数量
+			item.setStatus("1");//状态
+			item.setIsDefault("1");//默认
+			item.setSpec("{}");//规格
+
+			setItemValues(item,goods);
+
 			itemMapper.insert(item);
 		}
+
 	}
 
 	
@@ -103,9 +135,25 @@ public class GoodsServiceImpl implements GoodsService {
 	 * 修改
 	 */
 	@Override
-	public void update(TbGoods goods){
-		goodsMapper.updateByPrimaryKey(goods);
-	}	
+	public void update(Goods goods){
+		//更新及本表数据
+		goodsMapper.updateByPrimaryKey(goods.getGoods());
+		//更新扩展表数据
+		goodsDescMapper.updateByPrimaryKey(goods.getGoodsDesc());
+		//删除原有的sku列表数据
+		TbItemExample example=new TbItemExample();
+		com.pinyougou.pojo.TbItemExample.Criteria criteria = example.createCriteria();
+		criteria.andGoodsIdEqualTo(goods.getGoods().getId());
+		itemMapper.deleteByExample(example);
+
+		if ("1".equals(goods.getGoods().getIsEnableSpec())){
+			//插入新的SKU列表数据
+			saveItemList(goods);//插入SKU商品数据
+		}
+
+	}
+
+
 	
 	/**
 	 * 根据ID获取实体
@@ -120,7 +168,15 @@ public class GoodsServiceImpl implements GoodsService {
 		goods.setGoods(tbGoods);
 		TbGoodsDesc tbGoodsDesc = goodsDescMapper.selectByPrimaryKey(id);
 		goods.setGoodsDesc(tbGoodsDesc);
+		//查询SKU商品列表
+		TbItemExample example=new TbItemExample();
+		com.pinyougou.pojo.TbItemExample.Criteria criteria = example.createCriteria();
+		criteria.andGoodsIdEqualTo(id);//查询条件：商品ID
+		List<TbItem> itemList = itemMapper.selectByExample(example);
+		goods.setItemList(itemList);
+
 		return goods;
+
 	}
 
 	/**
