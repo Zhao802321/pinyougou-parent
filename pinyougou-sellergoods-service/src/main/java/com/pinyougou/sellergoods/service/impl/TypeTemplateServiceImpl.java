@@ -19,6 +19,7 @@ import com.pinyougou.pojo.TbTypeTemplateExample.Criteria;
 import com.pinyougou.sellergoods.service.TypeTemplateService;
 
 import entity.PageResult;
+import org.springframework.data.redis.core.RedisTemplate;
 
 /**
  * 服务实现层
@@ -111,7 +112,27 @@ public class TypeTemplateServiceImpl implements TypeTemplateService {
 		}
 		
 		Page<TbTypeTemplate> page= (Page<TbTypeTemplate>)typeTemplateMapper.selectByExample(example);		
+		saveToRedis();
 		return new PageResult(page.getTotal(), page.getResult());
+	}
+	@Autowired
+	private RedisTemplate redisTemplate;
+
+	/**
+	 * 将品牌列表与规格列表放入缓存
+	 */
+	private void saveToRedis(){
+		List<TbTypeTemplate> typeTemplates = findAll();
+		for (TbTypeTemplate tbTypeTemplate : typeTemplates) {
+			List<Map> brandList = JSON.parseArray(tbTypeTemplate.getBrandIds(), Map.class);
+			redisTemplate.boundHashOps("brandList").put(tbTypeTemplate.getId(),brandList);
+			//得到规格列表
+			List<Map> specList = findSpecList(tbTypeTemplate.getId());
+			redisTemplate.boundHashOps("specList").put(tbTypeTemplate.getId(),specList);
+
+		}
+
+		System.out.println("redis brandList");
 	}
 
 	/**

@@ -11,6 +11,7 @@ import com.pinyougou.pojo.TbItemCatExample.Criteria;
 import com.pinyougou.sellergoods.service.ItemCatService;
 
 import entity.PageResult;
+import org.springframework.data.redis.core.RedisTemplate;
 
 /**
  * 服务实现层
@@ -96,12 +97,23 @@ public class ItemCatServiceImpl implements ItemCatService {
 		Page<TbItemCat> page= (Page<TbItemCat>)itemCatMapper.selectByExample(example);		
 		return new PageResult(page.getTotal(), page.getResult());
 	}
+	@Autowired
+	private RedisTemplate redisTemplate;
+
 
 	@Override
 	public List<TbItemCat> findByParentId(Long parentId) {
 		TbItemCatExample itemCatExample = new TbItemCatExample();
 		Criteria criteria = itemCatExample.createCriteria();
 		criteria.andParentIdEqualTo(parentId);
+
+		//每次执行查询的时候，一次性读取缓存进行存储 (因为每次增删改都要执行此方法)
+		List<TbItemCat> list = findAll();
+		for(TbItemCat itemCat:list){
+			redisTemplate.boundHashOps("itemCat").put(itemCat.getName(), itemCat.getTypeId());
+		}
+		System.out.println("update redis");
+
 
 		return itemCatMapper.selectByExample(itemCatExample);
 	}
