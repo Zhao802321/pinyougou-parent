@@ -169,10 +169,13 @@
 			</div>
 			<!--selector-->
 			<div class="clearfix selector">
-				<div class="type-wrap">
+				<div class="type-wrap" ng-if="resultMap.categoryList != null">
 					<div class="fl key">商品分类</div>
 					<div class="fl value">
-						<a href="#">手机</a>  <a href="#">电视</a>
+						<span ng-repeat="category in resultMap.categoryList">
+							<a href="#">{{category}}</a>
+						</span>
+
 					</div>
 					<div class="fl ext"></div>
 				</div>
@@ -368,8 +371,8 @@
 											<i>{{item.price}}</i>
 										</strong>
 								</div>
-								<div class="attr">
-									<em>{{item.title}}</em>
+								<div class="attr" ng-bind-html="item.title| trustHtml">
+
 								</div>
 								<div class="cu">
 									<em></em>
