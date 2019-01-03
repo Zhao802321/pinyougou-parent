@@ -8,6 +8,9 @@ import com.pinyougou.pojo.TbItemExample;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.solr.core.SolrTemplate;
+import org.springframework.data.solr.core.query.Query;
+import org.springframework.data.solr.core.query.SimpleQuery;
+import org.springframework.data.solr.core.query.SolrDataQuery;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +22,13 @@ public class SolrUtil {
     private TbItemMapper tbItemMapper;
     @Autowired
     private SolrTemplate solrTemplate;
+    public void deleItemData(){
+        Query query = new SimpleQuery("*:*");
+        solrTemplate.delete(query);
+        solrTemplate.commit();
+
+    }
+
 
     public void importItemData(){
         TbItemExample example = new TbItemExample();
@@ -41,7 +51,8 @@ public class SolrUtil {
     public static void main(String[] args) {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath*:spring/applicationContext*.xml");
         SolrUtil solrUtil = (SolrUtil) context.getBean("solrUtil");
-        solrUtil.importItemData();
+        //solrUtil.deleItemData();
+      solrUtil.importItemData();
     }
 
 
