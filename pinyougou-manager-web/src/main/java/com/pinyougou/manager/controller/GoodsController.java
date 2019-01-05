@@ -2,6 +2,7 @@ package com.pinyougou.manager.controller;
 import java.util.Arrays;
 import java.util.List;
 
+import com.pinyougou.page.service.ItemPageService;
 import com.pinyougou.pojo.TbItem;
 import com.pinyougou.search.service.ItemSearchService;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -148,4 +149,15 @@ public class GoodsController {
 	}
 
 
-}
+	@Reference(timeout = 50000)
+	private ItemPageService itemPageService;
+
+	/**
+	 * 生成静态页（测试）
+	 * @param goodsId
+	 */
+	@RequestMapping("/genHtml.do")
+	public void genHtml(Long goodsId){
+		itemPageService.genItemHtml(goodsId);
+	}
+	}
