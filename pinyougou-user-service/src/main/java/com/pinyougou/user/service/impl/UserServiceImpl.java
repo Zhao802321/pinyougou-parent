@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.pinyougou.user.service.UserService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
@@ -22,7 +23,7 @@ import org.springframework.data.redis.core.RedisTemplate;
  * @author Administrator
  *
  */
-@Service
+@Service(timeout = 5000)
 public class UserServiceImpl implements UserService {
 
 	@Autowired
@@ -53,6 +54,9 @@ public class UserServiceImpl implements UserService {
 	public void add(TbUser user) {
 		user.setCreated(new Date());
 		user.setUpdated(new Date());
+		String password = DigestUtils.md5Hex(user.getPassword());//对密码加密
+		user.setPassword(password);
+
 		userMapper.insert(user);		
 	}
 
